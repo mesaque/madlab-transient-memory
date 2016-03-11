@@ -85,28 +85,28 @@ class MadLabBrazil_Transient{
 		dbDelta( $create_table );
 	}
 
-	public static function get_transient( $query, $expiration_time = 7200 )
+	public static function get_transient( $sql_statement, $expiration_time = 7200 )
 	{
 		global $wpdb;
-		$filtered       = preg_replace( self::PATTERN, '', $query );
+		$filtered       = preg_replace( self::PATTERN, '', $sql_statement );
 		$identification = crc32( $filtered );
 		$date           = current_time( 'timestamp' );
 
 		$result = $wpdb->get_var( "SELECT value FROM {$wpdb->prefix}madlabbrazil_transient WHERE id = '{$identification}' AND date > {$date} " );
 		if( null == $result ){
-			self::set_transient( $query, $expiration_time );
+			self::set_transient( $sql_statement, $expiration_time );
 			$result = $wpdb->get_var( "SELECT value FROM {$wpdb->prefix}madlabbrazil_transient WHERE id = '{$identification}'" );
 			return unserialize( $result );
 		}
 		return unserialize( $result );
 	}
-	public static function set_transient( $query, $expiration_time = 7200 )
+	public static function set_transient( $sql_statement, $expiration_time = 7200 )
 	{
 		global $wpdb;
-		$filtered       = preg_replace( self::PATTERN, '', $query );
+		$filtered       = preg_replace( self::PATTERN, '', $sql_statement );
 		$identification = crc32( $filtered );
 
-		$results = $wpdb->get_results( $query );
+		$results = $wpdb->get_results( $sql_statement );
 
 		//Delete some old register
 		$wpdb->delete( "{$wpdb->prefix}madlabbrazil_transient", array( 'id' => $identification ) );
@@ -124,6 +124,15 @@ class MadLabBrazil_Transient{
 			 	'%d'
 			 	)
 			);
+	}
+	public static function delete_transient( $sql_statement )
+	{
+		global $wpdb;
+		$filtered       = preg_replace( self::PATTERN, '', $sql_statement );
+		$identification = crc32( $filtered );
+
+		$wpdb->delete( "{$wpdb->prefix}madlabbrazil_transient", array( 'id' => $identification ) );
+
 	}
 
 }
