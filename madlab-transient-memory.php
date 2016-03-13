@@ -5,7 +5,7 @@
 /*
 Plugin Name: MadLab Brazil Transient Enhancement
 Plugin URI: https://madlabbrazil.com/
-Description:This plugin intent to overwrite the standart transient user in WordPress with more power.
+Description:This plugin is intended to overwrite the standard transient used in WordPress with more power.
 Version: 1.0
 Author: Mesaque Silva
 Author URI: http://mesaquesoares.blogspot.com.br/
