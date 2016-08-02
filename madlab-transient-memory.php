@@ -3,15 +3,15 @@
  * @package Mad Lab Brazil Transient Enhancement
  */
 /*
-Plugin Name: MadLab Brazil Transient Enhancement
-Plugin URI: https://madlabbrazil.com/
-Description:This plugin is intended to overwrite the standard transient used in WordPress with more power.
-Version: 1.0
-Author: Mesaque Silva
-Author URI: http://mesaquesoares.blogspot.com.br/
-License: GPLv2 or later
-Text Domain: MadLabTransientMemory
-*/
+ * Plugin Name: MadLab Brazil Transient Enhancement
+ * Plugin URI:  https://madlabbrazil.com/
+ * Description: This plugin is intended to overwrite the standard transient used in WordPress with more power.
+ * Version:     1.1.0
+ * Author:      Mesaque Silva
+ * Author URI:  http://mesaquesoares.blogspot.com.br/
+ * License:     GPLv2 or later
+ * Text Domain: MadLabTransientMemory
+ */
 
 /*
 This program is free software; you can redistribute it and/or
@@ -31,8 +31,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 Copyright 2015-2016 Mad Laboratories Brazil.
 */
 
-class MadLabBrazil_Transient{
+if ( ! function_exists( 'add_action' ) )
+	exit;
 
+class MadLabBrazil_Transient
+{
 	protected static $instance = null;
 
 	public $memcache = false;
@@ -59,7 +62,6 @@ class MadLabBrazil_Transient{
 
 	public function __construct()
 	{
-
 		$this->memcache = $this->memcache_resource();
 	}
 
@@ -67,22 +69,25 @@ class MadLabBrazil_Transient{
 	{
 		global $wpdb;
 
-		$create_table = "
-			CREATE TABLE IF NOT EXISTS {$wpdb->prefix}madlabbrazil_transient (
-				id           INT(11)    	UNSIGNED	NOT NULL	            ,
-				value        TEXT 	    				NOT NULL     			,
-				date      	 INT(20)   			        NOT NULL	            ,
-				PRIMARY KEY (id)
-			) DEFAULT CHARACTER SET utf8 ENGINE = MyISAM;";
+		$queries = "
+			CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}madlabbrazil_transient` (
+				`id`    INT(11)  UNSIGNED NOT NULL,
+				`value` LONGTEXT 		  NOT NULL,
+				`date`  INT(20)   	      NOT NULL,
+				PRIMARY KEY (`id`)
+			) DEFAULT CHARACTER SET utf8 ENGINE = MyISAM;
+		";
 
 		require_once ABSPATH . '/wp-admin/includes/upgrade.php';
 
-		dbDelta( $create_table );
+		dbDelta( $queries );
 	}
+
 	public static function delete_table()
 	{
 		global $wpdb;
-		$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}madlabbrazil_transient");
+
+		$wpdb->query( "DROP TABLE IF EXISTS `{$wpdb->prefix}madlabbrazil_transient`" );
 	}
 
 	public function memcache_resource()
@@ -93,65 +98,95 @@ class MadLabBrazil_Transient{
 	public function get_transient( $query, $expiration_time = 7200 )
 	{
 		global $wpdb;
+
 		$_query = $query;
+
 		if ( ! is_string( $query ) ):
 			$_query = json_encode( $query );
 		endif;
-		$filtered       = preg_replace( self::PATTERN, '', $_query );
-		$identification = crc32( $filtered );
+
+		$identification = $this->get_identification( $_query );
 		$date           = current_time( 'timestamp' );
 
-		$result = $wpdb->get_var( "SELECT value FROM {$wpdb->prefix}madlabbrazil_transient WHERE id = '{$identification}' AND date > {$date} " );
-		if( null == $result ){
+		$sql_prepare = $wpdb->prepare(
+			"SELECT `value`
+			 FROM `{$wpdb->prefix}madlabbrazil_transient`
+			 WHERE `id`    = %d
+			 	AND `date` > %d
+			",
+			$identification,
+			$date
+		);
+		$result = $wpdb->get_var( $sql_prepare );
+
+		unset( $sql_prepare );
+
+		if ( null === $result ) {
 			self::set_transient( $query, $expiration_time );
-			$result = $wpdb->get_var( "SELECT value FROM {$wpdb->prefix}madlabbrazil_transient WHERE id = '{$identification}'" );
+			$sql_prepare = $wpdb->prepare(
+				"SELECT `value`
+				 FROM `{$wpdb->prefix}madlabbrazil_transient`
+				 WHERE `id` = %d
+				",
+				$identification
+			);
+			$result = $wpdb->get_var( $sql_prepare );
+
 			return unserialize( $result );
 		}
+
 		return unserialize( $result );
 	}
+
 	public function set_transient( $query, $expiration_time = 7200 )
 	{
 		global $wpdb;
 
 		$_query = $query;
+		$string = true;
+
 		if ( ! is_string( $query ) ):
+			$string = false;
 			$_query = json_encode( $query );
 		endif;
-		$filtered       = preg_replace( self::PATTERN, '', $_query );
-		$identification = crc32( $filtered );
-		$results = ( is_string( $query ) ) ? $wpdb->get_results( $query ): new WP_Query( $query );
+
+		$identification = $this->get_identification( $_query );
+		$results        = ( $string ) ? $wpdb->get_results( $query ) : new WP_Query( $query );
 
 		//Delete some old register
 		$wpdb->delete( "{$wpdb->prefix}madlabbrazil_transient", array( 'id' => $identification ) );
+
 		$result = $wpdb->insert(
-			 "{$wpdb->prefix}madlabbrazil_transient",
-			 array(
-					'id'    => $identification,
-					'value' => serialize( $results ),
-					'date'  => ( current_time( 'timestamp' ) + ( (int) $expiration_time ) )
-			 	),
-			 array(
+			"{$wpdb->prefix}madlabbrazil_transient",
+			array(
+				'id'    => $identification,
+				'value' => serialize( $results ),
+				'date'  => ( current_time( 'timestamp' ) + ( (int) $expiration_time ) ),
+			),
+			array(
 			 	'%d',
 			 	'%s',
-			 	'%d'
-			 	)
-			);
+			 	'%d',
+			)
+		);
 	}
 
 	public function get_transient_memcache( $query, $expiration_time = 7200 )
 	{
 		$_query = $query;
+
 		if ( ! is_string( $query ) ):
 			$_query = json_encode( $query );
 		endif;
 
-		$filtered       = preg_replace( self::PATTERN, '', $_query );
-		$identification = crc32( $filtered );
-		$result = $this->memcache->get( $identification );
-		if( false === $result ):
+		$identification = $this->get_identification( $_query );
+		$result         = $this->memcache->get( $identification );
+
+		if ( false === $result ) :
 			$this->set_transient_memcache( $query, $expiration_time );
 			return $this->get_transient_memcache( $query, $expiration_time );
 		endif;
+
 		return unserialize( $result );
 	}
 
@@ -160,60 +195,78 @@ class MadLabBrazil_Transient{
 		global $wpdb;
 
 		$_query = $query;
-		if ( ! is_string( $query ) ):
+		$string = true;
+
+		if ( ! is_string( $query ) ) :
+			$string = false;
 			$_query = json_encode( $query );
 		endif;
-		$filtered       = preg_replace( self::PATTERN, '', $_query );
-		$identification = crc32( $filtered );
+
+		$identification = $this->get_identification( $_query );
 		$this->memcache->delete( $identification );
-		$results = ( is_string( $query ) ) ? $wpdb->get_results( $query ): new WP_Query( $query );
-		$this->memcache ->set( $identification, serialize( $results ), 0, (int) $expiration_time  );
+		$results        = ( $string ) ? $wpdb->get_results( $query ) : new WP_Query( $query );
+
+		$this->memcache->set( $identification, serialize( $results ), 0, (int) $expiration_time  );
 	}
 
 	public function delete_transient( $query )
 	{
 		global $wpdb;
+
 		$_query = $query;
+
 		if ( ! is_string( $query ) ):
 			$_query = json_encode( $query );
 		endif;
-		$filtered       = preg_replace( self::PATTERN, '', $_query );
-		$identification = crc32( $filtered );
 
+		$identification = $this->get_identification( $_query );
 		$wpdb->delete( "{$wpdb->prefix}madlabbrazil_transient", array( 'id' => $identification ) );
-
 	}
+
 	public function delete_transient_memcache( $query )
 	{
 		global $wpdb;
+
 		$_query = $query;
+
 		if ( ! is_string( $query ) ):
 			$_query = json_encode( $query );
 		endif;
-		$filtered       = preg_replace( self::PATTERN, '', $_query );
-		$identification = crc32( $filtered );
 
+		$identification = $this->get_identification( $_query );
 		$this->memcache->delete( $identification );
-
 	}
+
+	public function get_identification( $query )
+	{
+		$filtered       = preg_replace( self::PATTERN, '', $query );
+		$checksum       = crc32( $filtered );
+		$identification = sprintf( '%u', $checksum );
+
+		return intval( $identification );
+	}
+
 	public static function handle_get_transient( $query, $expiration_time = 7200 )
 	{
 		$madlabbrazil = MadLabBrazil_Transient::get_instance();
-		if( false !== $madlabbrazil->memcache )	return $madlabbrazil->get_transient_memcache( $query, $expiration_time );
+
+		if ( false !== $madlabbrazil->memcache )
+			return $madlabbrazil->get_transient_memcache( $query, $expiration_time );
 
 		return $madlabbrazil->get_transient( $query, $expiration_time );
 	}
+
 	public static function handle_set_transient( $query, $expiration_time = 7200 )
 	{
 		$madlabbrazil = MadLabBrazil_Transient::get_instance();
-		if( false !== $madlabbrazil->memcache ):
+
+		if ( false !== $madlabbrazil->memcache )  :
 			$madlabbrazil->set_transient_memcache( $query, $expiration_time );
 			return;
 		endif;
 
 		$madlabbrazil->set_transient( $query, $expiration_time );
 	}
-
 }
 register_activation_hook( __FILE__, array( 'MadLabBrazil_Transient', 'create_table' ) );
 register_deactivation_hook( __FILE__, array( 'MadLabBrazil_Transient', 'delete_table' ) );
