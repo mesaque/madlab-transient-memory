@@ -72,8 +72,8 @@ class MadLabBrazil_Transient
 		$queries = "
 			CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}madlabbrazil_transient` (
 				`id`    INT(11)  UNSIGNED NOT NULL,
-				`value` LONGTEXT 		  NOT NULL,
-				`date`  INT(20)   	      NOT NULL,
+				`value` TEXT 		  NOT NULL,
+				`date`  INT(20)   	  NOT NULL,
 				PRIMARY KEY (`id`)
 			) DEFAULT CHARACTER SET utf8 ENGINE = MyISAM;
 		";
