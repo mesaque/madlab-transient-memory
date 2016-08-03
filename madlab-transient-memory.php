@@ -75,7 +75,7 @@ class MadLabBrazil_Transient
 
 	protected function set_memcache()
 	{
-		if ( !function_exists( 'memcache_connect' ) )
+		if ( function_exists( 'memcache_connect' ) )
 			$this->memcache = $this->memcache_resource();
 	}
 
