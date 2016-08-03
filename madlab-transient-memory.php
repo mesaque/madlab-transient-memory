@@ -276,7 +276,7 @@ class MadLabBrazil_Transient
 		$queries = "
 			CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}madlabbrazil_transient` (
 				`id`    INT(11)  UNSIGNED NOT NULL,
-				`value` TEXT 		      NOT NULL,
+				`value` LONGTEXT 		  NOT NULL,
 				`date`  INT(20)   	      NOT NULL,
 				PRIMARY KEY (`id`)
 			) {$charset} ENGINE = MyISAM;
@@ -295,9 +295,6 @@ class MadLabBrazil_Transient
 	}
 }
 
-register_activation_hook( __FILE__, array( 'MadLabBrazil_Transient', 'create_table' ) );
-register_deactivation_hook( __FILE__, array( 'MadLabBrazil_Transient', 'delete_table' ) );
-
 function madLab_brazil_get_transient( $query, $expiration_time = 7200 )
 {
 	$instance = MadLabBrazil_Transient::get_instance();
@@ -315,3 +312,5 @@ function madLab_brazil_set_transient( $query, $expiration_time = 7200 )
 	$instance->set_expiration_time( $expiration_time );
 	$instance->handle_set_transient();
 }
+register_activation_hook( __FILE__, array( 'MadLabBrazil_Transient', 'create_table' ) );
+register_deactivation_hook( __FILE__, array( 'MadLabBrazil_Transient', 'delete_table' ) );
