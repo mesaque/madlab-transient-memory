@@ -185,7 +185,7 @@ class MadLabBrazil_Transient
 		$_query = $query;
 
 		//fallback on normal dba cache
-		if ( null == $this->memcache )
+		if ( null === $this->memcache )
 			return $this->get_transient( $query, $expiration_time );
 
 		if ( ! is_string( $query ) )
@@ -207,7 +207,7 @@ class MadLabBrazil_Transient
 		global $wpdb;
 
 		//fallback on normal dba cache
-		if ( null == $this->memcache )
+		if ( null === $this->memcache )
 			return $this->set_transient( $query, $expiration_time );
 
 		$_query = $query;
@@ -264,7 +264,7 @@ class MadLabBrazil_Transient
 	{
 		$madlabbrazil = MadLabBrazil_Transient::get_instance();
 
-		if ( false !== $madlabbrazil->memcache )
+		if ( null !== $madlabbrazil->memcache )
 			return $madlabbrazil->get_transient_memcache( $query, $expiration_time );
 
 		return $madlabbrazil->get_transient( $query, $expiration_time );
@@ -274,7 +274,7 @@ class MadLabBrazil_Transient
 	{
 		$madlabbrazil = MadLabBrazil_Transient::get_instance();
 
-		if ( false !== $madlabbrazil->memcache )  :
+		if ( null !== $madlabbrazil->memcache )  :
 			$madlabbrazil->set_transient_memcache( $query, $expiration_time );
 			return;
 		endif;
