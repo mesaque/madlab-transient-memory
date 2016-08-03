@@ -185,7 +185,7 @@ class MadLabBrazil_Transient
 
 		//fallback on normal dba cache
 		if( null == $this->memcache ):
-			return $this->get_transient( $_query, $expiration_time );
+			return $this->get_transient( $query, $expiration_time );
 		endif;
 
 		if ( ! is_string( $query ) ):
@@ -209,7 +209,7 @@ class MadLabBrazil_Transient
 
 		//fallback on normal dba cache
 		if( null == $this->memcache ):
-			return $this->set_transient( $_query, $expiration_time );
+			return $this->set_transient( $query, $expiration_time );
 		endif;
 
 		$_query = $query;
