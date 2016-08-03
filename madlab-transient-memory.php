@@ -62,7 +62,15 @@ class MadLabBrazil_Transient
 
 	public function __construct()
 	{
-		$this->memcache = $this->memcache_resource();
+		if( function_exists( 'memcache_connect' ) ):
+			$this->memcache = $this->memcache_resource();
+		else:
+			/**
+			 * PHP Extension are not installed
+			 * http://php.net/manual/pt_BR/book.memcache.php
+			 */
+			$this->memcache = null;
+		endif;
 	}
 
 	public static function create_table()
@@ -175,6 +183,11 @@ class MadLabBrazil_Transient
 	{
 		$_query = $query;
 
+		//fallback on normal dba cache
+		if( null == $this->memcache ):
+			return $this->get_transient( $_query, $expiration_time );
+		endif;
+
 		if ( ! is_string( $query ) ):
 			$_query = json_encode( $query );
 		endif;
@@ -193,6 +206,11 @@ class MadLabBrazil_Transient
 	public function set_transient_memcache( $query, $expiration_time = 7200 )
 	{
 		global $wpdb;
+
+		//fallback on normal dba cache
+		if( null == $this->memcache ):
+			return $this->set_transient( $_query, $expiration_time );
+		endif;
 
 		$_query = $query;
 		$string = true;
