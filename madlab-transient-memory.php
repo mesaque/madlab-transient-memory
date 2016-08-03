@@ -79,13 +79,14 @@ class MadLabBrazil_Transient
 	{
 		global $wpdb;
 
+		$charset = $wpdb->get_charset_collate();
 		$queries = "
 			CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}madlabbrazil_transient` (
 				`id`    INT(11)  UNSIGNED NOT NULL,
-				`value` TEXT 		  NOT NULL,
-				`date`  INT(20)   	  NOT NULL,
+				`value` TEXT 		      NOT NULL,
+				`date`  INT(20)   	      NOT NULL,
 				PRIMARY KEY (`id`)
-			) DEFAULT CHARACTER SET utf8 ENGINE = MyISAM;
+			) {$charset} ENGINE = MyISAM;
 		";
 
 		require_once ABSPATH . '/wp-admin/includes/upgrade.php';
