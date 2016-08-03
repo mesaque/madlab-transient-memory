@@ -38,7 +38,7 @@ class MadLabBrazil_Transient
 {
 	protected static $instance = null;
 
-	public $memcache = false;
+	public $memcache = null;
 	const PATTERN = "#\(|\)|'|\,|\=|\.| |\*#";
 
 	//Memcache
@@ -53,24 +53,25 @@ class MadLabBrazil_Transient
 	 */
 	public static function get_instance()
 	{
-		if ( null == self::$instance ) {
+		if ( null == self::$instance )
 			self::$instance = new self;
-		}
 
 		return self::$instance;
 	}
 
 	public function __construct()
 	{
-		if( function_exists( 'memcache_connect' ) ):
+		$this->set_memcache();
+	}
+
+	/**
+	 * PHP Extension are not installed
+	 * http://php.net/manual/pt_BR/book.memcache.php
+	 */
+	public function set_memcache()
+	{
+		if ( function_exists( 'memcache_connect' ) )
 			$this->memcache = $this->memcache_resource();
-		else:
-			/**
-			 * PHP Extension are not installed
-			 * http://php.net/manual/pt_BR/book.memcache.php
-			 */
-			$this->memcache = null;
-		endif;
 	}
 
 	public static function create_table()
@@ -109,9 +110,8 @@ class MadLabBrazil_Transient
 
 		$_query = $query;
 
-		if ( ! is_string( $query ) ):
+		if ( ! is_string( $query ) )
 			$_query = json_encode( $query );
-		endif;
 
 		$identification = $this->get_identification( $_query );
 		$date           = current_time( 'timestamp' );
@@ -184,13 +184,11 @@ class MadLabBrazil_Transient
 		$_query = $query;
 
 		//fallback on normal dba cache
-		if( null == $this->memcache ):
+		if ( null == $this->memcache )
 			return $this->get_transient( $query, $expiration_time );
-		endif;
 
-		if ( ! is_string( $query ) ):
+		if ( ! is_string( $query ) )
 			$_query = json_encode( $query );
-		endif;
 
 		$identification = $this->get_identification( $_query );
 		$result         = $this->memcache->get( $identification );
@@ -208,9 +206,8 @@ class MadLabBrazil_Transient
 		global $wpdb;
 
 		//fallback on normal dba cache
-		if( null == $this->memcache ):
+		if ( null == $this->memcache )
 			return $this->set_transient( $query, $expiration_time );
-		endif;
 
 		$_query = $query;
 		$string = true;
@@ -233,9 +230,8 @@ class MadLabBrazil_Transient
 
 		$_query = $query;
 
-		if ( ! is_string( $query ) ):
+		if ( ! is_string( $query ) )
 			$_query = json_encode( $query );
-		endif;
 
 		$identification = $this->get_identification( $_query );
 		$wpdb->delete( "{$wpdb->prefix}madlabbrazil_transient", array( 'id' => $identification ) );
@@ -247,9 +243,8 @@ class MadLabBrazil_Transient
 
 		$_query = $query;
 
-		if ( ! is_string( $query ) ):
+		if ( ! is_string( $query ) )
 			$_query = json_encode( $query );
-		endif;
 
 		$identification = $this->get_identification( $_query );
 		$this->memcache->delete( $identification );
