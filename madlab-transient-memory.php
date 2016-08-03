@@ -38,7 +38,12 @@ class MadLabBrazil_Transient
 {
 	protected static $instance = null;
 
+	/**
+	 * PHP Extension are not installed
+	 * http://php.net/manual/pt_BR/book.memcache.php
+	 */
 	public $memcache = null;
+
 	const PATTERN = "#\(|\)|'|\,|\=|\.| |\*#";
 
 	//Memcache
@@ -64,10 +69,6 @@ class MadLabBrazil_Transient
 		$this->set_memcache();
 	}
 
-	/**
-	 * PHP Extension are not installed
-	 * http://php.net/manual/pt_BR/book.memcache.php
-	 */
 	public function set_memcache()
 	{
 		if ( function_exists( 'memcache_connect' ) )
